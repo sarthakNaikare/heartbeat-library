@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_PASSWORD: heartbeat
+      POSTGRES_DB: heartbeat_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - tsdb_data:/var/lib/postgresql/data
+volumes:
+  tsdb_data:
