@@ -119,7 +119,7 @@ function AboutPopover({open, onClose}) {
 }
 
 function Nav({page,setPage}) {
-  const [aboutOpen,setAboutOpen]=useState(false);
+  const [aboutOpen,setAboutOpen]=useState(false); // starts closed
   const links=[["search","Search"],["dashboard","Dashboard"],["benchmarks","Benchmarks"],["tech","Technology"],["about","About"]];
   return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"1px solid rgba(0,212,255,0.1)",position:"sticky",top:0,zIndex:100,background:"rgba(2,8,24,0.96)"}},
     React.createElement("div",{style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer"},onClick:()=>setPage("search")},
