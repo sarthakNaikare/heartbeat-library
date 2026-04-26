@@ -120,6 +120,11 @@ function AboutPopover({open, onClose}) {
 
 function Nav({page,setPage}) {
   const [aboutOpen,setAboutOpen]=useState(false);
+  useEffect(()=>{
+    function closeIt(){setAboutOpen(false);}
+    document.addEventListener("click",closeIt);
+    return()=>document.removeEventListener("click",closeIt);
+  },[]);
   const links=[["search","Search"],["dashboard","Dashboard"],["benchmarks","Benchmarks"],["tech","Technology"],["about","About"]];
   return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"1px solid rgba(0,212,255,0.1)",position:"sticky",top:0,zIndex:100,background:"rgba(2,8,24,0.96)"}},
     React.createElement("div",{style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer"},onClick:()=>setPage("search")},
@@ -433,7 +438,7 @@ function AboutPage() {
 export default function App() {
   const [page,setPage]=useState("search");
   const pages={search:React.createElement(SearchPage),dashboard:React.createElement(DashboardPage),benchmarks:React.createElement(BenchmarksPage),tech:React.createElement(TechPage),about:React.createElement(AboutPage)};
-  return React.createElement("div",{style:{minHeight:"100vh",background:"#020818",padding:"20px"},onClick:()=>window.__closeAbout&&window.__closeAbout()},
+  return React.createElement("div",{style:{minHeight:"100vh",background:"#020818",padding:"20px"}},
     React.createElement("style",null,"::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.2);border-radius:2px}"),
     React.createElement("div",{style:{maxWidth:1100,margin:"0 auto",background:"#020818",borderRadius:14,overflow:"hidden",boxShadow:"0 0 80px rgba(0,212,255,0.05)",border:"1px solid rgba(0,212,255,0.08)",position:"relative"}},
       React.createElement(Nav,{page,setPage}),
