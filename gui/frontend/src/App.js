@@ -78,6 +78,7 @@ function useECGCanvas(canvasRef, beatType, animate) {
 
 function AboutPopover({open, onClose}) {
   const ref = useRef();
+  if(!open) return null;
   useEffect(()=>{
     function h(e){if(ref.current&&!ref.current.contains(e.target))onClose();}
     if(open)document.addEventListener("mousedown",h);
