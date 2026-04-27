@@ -155,7 +155,7 @@ function Nav({page,setPage}){
     document.addEventListener("click",close);
     return()=>document.removeEventListener("click",close);
   },[]);
-  const links=[["search","Search"],["dashboard","Dashboard"],["benchmarks","Benchmarks"],["tech","Technology"],["about","About"]];
+  const links=[["search","Search"],["dashboard","Dashboard"],["benchmarks","Benchmarks"],["tech","Technology"],["about","About"],["upload","Upload ECG"]];
   return React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"10px 20px",borderBottom:"1px solid rgba(0,212,255,0.1)",position:"sticky",top:0,zIndex:200,background:"rgba(2,8,24,0.97)",backdropFilter:"blur(12px)"}},
     React.createElement("div",{"data-hover":true,style:{display:"flex",alignItems:"center",gap:9,cursor:"pointer",transition:"opacity 0.2s"},onClick:()=>setPage("search"),onMouseEnter:e=>e.currentTarget.style.opacity="0.75",onMouseLeave:e=>e.currentTarget.style.opacity="1"},
       React.createElement("svg",{width:22,height:22,viewBox:"0 0 22 22",fill:"none"},
@@ -476,10 +476,150 @@ function AboutPage(){
   );
 }
 
+
+function UploadPage(){
+  const [beat,setBeat]=useState("V");
+  const [file,setFile]=useState(null);
+  const [loading,setLoading]=useState(false);
+  const [results,setResults]=useState(null);
+  const [error,setError]=useState(null);
+  const [downloading,setDownloading]=useState(false);
+  const [dragOver,setDragOver]=useState(false);
+  const fref=useRef();
+
+  const BF={V:"PVC Premature Ventricular",N:"Normal sinus rhythm",A:"Atrial premature beat",L:"Left bundle branch block"};
+
+  const handleFile=(f)=>{
+    if(!f)return;
+    const ext=f.name.split(".").pop().toLowerCase();
+    if(!["csv","txt","dat","edf","asc","tsv"].includes(ext)){setError("Unsupported format. Please use CSV, TXT, DAT, ASC, or TSV.");return;}
+    setFile(f);setError(null);setResults(null);
+  };
+
+  const runSearch=async()=>{
+    if(!file){setError("Please upload a file first.");return;}
+    setLoading(true);setError(null);
+    try{
+      const fd=new FormData();
+      fd.append("file",file);
+      fd.append("beat_type",beat);
+      const r=await fetch(API+"/upload-search",{method:"POST",body:fd});
+      if(!r.ok){const e=await r.json();throw new Error(e.detail||"Search failed");}
+      const d=await r.json();
+      setResults(d);
+    }catch(e){setError(e.message||"Search failed. Please try again.");}
+    setLoading(false);
+  };
+
+  const downloadReport=async()=>{
+    if(!results)return;
+    setDownloading(true);
+    try{
+      const r=await fetch(API+"/generate-report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(results)});
+      const blob=await r.blob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;a.download="heartbeat-report-"+Date.now()+".html";
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }catch(e){setError("Report generation failed.");}
+    setDownloading(false);
+  };
+
+  const rts=TS[beat]||TS.V;
+
+  return React.createElement("div",{className:"page-enter",style:{position:"relative",overflow:"hidden",minHeight:580}},
+    React.createElement(BG),
+    React.createElement("div",{style:{padding:"18px 22px",position:"relative",zIndex:2}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}},
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:13,fontWeight:500,color:"#e8f4ff"}},"Upload ECG Signal"),
+          React.createElement("div",{style:{fontSize:10,color:"rgba(0,212,255,0.35)",marginTop:2}},"Upload any ECG file and find similar beats across 99.6M samples")
+        ),
+        results&&React.createElement("div",{"data-hover":true,className:"hov-btn",onClick:downloadReport,style:{display:"flex",alignItems:"center",gap:7,padding:"8px 18px",borderRadius:9,border:"1px solid rgba(0,230,118,0.35)",background:"rgba(0,230,118,0.07)",color:"#00e676",fontSize:11,cursor:"pointer"}},
+          downloading?"Generating...":"Download Medical Report"
+        )
+      ),
+      React.createElement("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}},
+        React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:12}},
+          React.createElement("div",{"data-hover":true,
+            onDragOver:(e)=>{e.preventDefault();setDragOver(true);},
+            onDragLeave:()=>setDragOver(false),
+            onDrop:(e)=>{e.preventDefault();setDragOver(false);handleFile(e.dataTransfer.files[0]);},
+            onClick:()=>fref.current&&fref.current.click(),
+            style:{border:"2px dashed "+(dragOver?"rgba(0,212,255,0.6)":"rgba(0,212,255,0.15)"),borderRadius:12,padding:"32px 20px",textAlign:"center",cursor:"pointer",background:dragOver?"rgba(0,212,255,0.06)":"rgba(0,212,255,0.02)",transition:"all 0.2s"}},
+            React.createElement("input",{ref:fref,type:"file",accept:".csv,.txt,.dat,.edf,.asc,.tsv",style:{display:"none"},onChange:(e)=>handleFile(e.target.files[0])}),
+            React.createElement("div",{style:{fontSize:28,marginBottom:10}},"📂"),
+            React.createElement("div",{style:{fontSize:12,fontWeight:500,color:"#e8f4ff",marginBottom:5}},file?file.name:"Drop your ECG file here"),
+            React.createElement("div",{style:{fontSize:10,color:"rgba(0,212,255,0.35)",marginBottom:8}},file?"Click to change file":"or click to browse"),
+            React.createElement("div",{style:{display:"flex",justifyContent:"center",gap:6,flexWrap:"wrap"}},
+              ["CSV","TXT","DAT","EDF","ASC","TSV"].map(fmt=>React.createElement("span",{key:fmt,style:{fontSize:9,padding:"2px 7px",borderRadius:8,border:"1px solid rgba(0,212,255,0.12)",color:"rgba(0,212,255,0.4)"}},fmt))
+            )
+          ),
+          file&&React.createElement("div",{style:{background:"rgba(0,230,118,0.05)",border:"1px solid rgba(0,230,118,0.15)",borderRadius:9,padding:12}},
+            React.createElement("div",{style:{fontSize:10,color:"rgba(0,230,118,0.6)",marginBottom:4}},"File ready"),
+            React.createElement("div",{style:{fontSize:12,fontWeight:500,color:"#e8f4ff"}},file.name),
+            React.createElement("div",{style:{fontSize:9,color:"rgba(0,212,255,0.35)",marginTop:2}},(file.size/1024).toFixed(1)+" KB")
+          ),
+          React.createElement("div",null,
+            React.createElement("div",{style:{fontSize:9,letterSpacing:"1.3px",color:"rgba(0,212,255,0.28)",textTransform:"uppercase",marginBottom:8}},"Beat type to search"),
+            Object.entries(BF).map(([type,label])=>{const t2=TS[type];const ac=beat===type;return React.createElement("div",{"data-hover":true,key:type,onClick:()=>setBeat(type),style:{padding:"7px 10px",borderRadius:8,border:"1px solid "+(ac?t2.border:"rgba(0,212,255,0.07)"),background:ac?t2.bg:"transparent",color:ac?t2.color:"rgba(0,212,255,0.4)",fontSize:10,cursor:"pointer",display:"flex",alignItems:"center",gap:6,marginBottom:5,transition:"all 0.2s"}},
+              React.createElement("div",{style:{width:5,height:5,borderRadius:"50%",background:t2.color,flexShrink:0}}),label
+            );})
+          ),
+          error&&React.createElement("div",{style:{background:"rgba(255,82,82,0.08)",border:"1px solid rgba(255,82,82,0.2)",borderRadius:9,padding:11,fontSize:11,color:"#ff5252"}},error),
+          React.createElement("div",{"data-hover":true,className:"hov-btn",onClick:runSearch,style:{background:loading?"rgba(255,171,64,0.07)":"rgba(0,212,255,0.08)",border:"1px solid "+(loading?"rgba(255,171,64,0.35)":"rgba(0,212,255,0.3)"),borderRadius:10,padding:12,color:loading?"#ffab40":"#00d4ff",fontSize:12,textAlign:"center",cursor:loading?"wait":"pointer",boxShadow:loading?"none":"0 0 16px rgba(0,212,255,0.1)"}},loading?"Searching 99.6M samples...":"Search Similar Beats")
+        ),
+        React.createElement("div",null,
+          !results&&React.createElement("div",{style:{background:"rgba(0,212,255,0.02)",border:"1px solid rgba(0,212,255,0.06)",borderRadius:12,padding:24,textAlign:"center",height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12}},
+            React.createElement("div",{style:{fontSize:32}},"🫀"),
+            React.createElement("div",{style:{fontSize:12,fontWeight:500,color:"rgba(0,212,255,0.5)"}},"Results will appear here"),
+            React.createElement("div",{style:{fontSize:10,color:"rgba(0,212,255,0.28)",maxWidth:260,lineHeight:1.7}},"Upload an ECG signal file and click Search to find the most similar beats across 2,821 patients in the MIT-BIH and PTB-XL databases."),
+            React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:6,marginTop:8,width:"100%",maxWidth:260}},
+              [["Filter","84ms avg","#00d4ff"],["DTW search","201,680 beats","#00e676"],["Precision","100% validated","#7c4dff"]].map(([l,v,c])=>
+                React.createElement("div",{key:l,style:{display:"flex",justifyContent:"space-between",padding:"5px 10px",borderRadius:7,background:"rgba(0,212,255,0.03)",border:"1px solid rgba(0,212,255,0.06)"}},
+                  React.createElement("span",{style:{fontSize:10,color:"rgba(0,212,255,0.4)"}},l),
+                  React.createElement("span",{style:{fontSize:10,fontWeight:500,color:c}},v)
+                )
+              )
+            )
+          ),
+          results&&React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+            React.createElement("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}},
+              [["Filter",results.stats.filter_ms+"ms","#00d4ff"],["Candidates",results.stats.candidates+"/201k","#ffab40"],["Samples",results.samples.toLocaleString(),"#00e676"]].map(([l,v,c])=>
+                React.createElement("div",{key:l,style:{background:"rgba(0,212,255,0.025)",border:"1px solid rgba(0,212,255,0.07)",borderRadius:8,padding:"9px 11px",textAlign:"center"}},
+                  React.createElement("div",{style:{fontSize:8,color:"rgba(0,212,255,0.3)",textTransform:"uppercase",letterSpacing:"0.5px"}},l),
+                  React.createElement("div",{style:{fontSize:16,fontWeight:500,color:c,marginTop:2}},v)
+                )
+              )
+            ),
+            React.createElement("div",{style:{fontSize:9,color:"rgba(0,212,255,0.28)",textTransform:"uppercase",letterSpacing:"1px",marginBottom:4}},"Top matches"),
+            results.results.map((r,i)=>{
+              const rts=TS[r.beat_type]||TS.V;
+              return React.createElement("div",{"data-hover":true,key:i,className:"res-row-item",style:{display:"flex",alignItems:"center",gap:9,padding:"8px 11px",borderRadius:9,border:"1px solid rgba(0,212,255,0.06)",background:"rgba(0,212,255,0.02)",cursor:"pointer"}},
+                React.createElement("div",{style:{fontSize:10,color:"rgba(0,212,255,0.22)",width:16,flexShrink:0}},i+1),
+                React.createElement(MiniWave,{type:r.beat_type}),
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("div",{style:{fontSize:11,color:"#e8f4ff",fontWeight:500}},"Patient "+r.patient_id+" / "+r.lead),
+                  React.createElement("div",{style:{fontSize:9,color:"rgba(0,212,255,0.3)"}},r.beat_sample&&r.beat_sample.toLocaleString()+" · beat-level DTW")
+                ),
+                React.createElement("div",{style:{textAlign:"right",flexShrink:0}},
+                  React.createElement("div",{style:{fontSize:14,fontWeight:500,color:"#00d4ff"}},r.dtw_distance&&r.dtw_distance.toFixed(3)),
+                  React.createElement("div",{style:{fontSize:9,padding:"2px 7px",borderRadius:7,background:rts.bg,color:rts.color,border:"1px solid "+rts.border,marginTop:2}},BL[r.beat_type]+" ✓")
+                )
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+}
+
 export default function App(){
   const [page,setPage]=useState("search");
   const [splash,setSplash]=useState(true);
-  const pages={search:React.createElement(SearchPage,{key:"search"}),dashboard:React.createElement(DashboardPage,{key:"dashboard"}),benchmarks:React.createElement(BenchmarksPage,{key:"benchmarks"}),tech:React.createElement(TechPage,{key:"tech"}),about:React.createElement(AboutPage,{key:"about"})};
+  const pages={search:React.createElement(SearchPage,{key:"search"}),dashboard:React.createElement(DashboardPage,{key:"dashboard"}),benchmarks:React.createElement(BenchmarksPage,{key:"benchmarks"}),tech:React.createElement(TechPage,{key:"tech"}),about:React.createElement(AboutPage,{key:"about"}),upload:React.createElement(UploadPage,{key:"upload"})};
   if(splash) return React.createElement("div",{style:{minHeight:"100vh",background:"#020818",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}},
     React.createElement("style",null,GLOBALCSS),
     React.createElement(Cursor),
