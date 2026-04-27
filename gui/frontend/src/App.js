@@ -548,7 +548,7 @@ function UploadPage(){
             onDrop:(e)=>{e.preventDefault();setDragOver(false);handleFile(e.dataTransfer.files[0]);},
             onClick:()=>fref.current&&fref.current.click(),
             style:{border:"2px dashed "+(dragOver?"rgba(0,212,255,0.6)":"rgba(0,212,255,0.15)"),borderRadius:12,padding:"32px 20px",textAlign:"center",cursor:"pointer",background:dragOver?"rgba(0,212,255,0.06)":"rgba(0,212,255,0.02)",transition:"all 0.2s"}},
-            React.createElement("input",{ref:fref,type:"file",accept:".csv,.txt,.dat,.edf,.asc,.tsv",style:{display:"none"},onChange:(e)=>handleFile(e.target.files[0])}),
+            React.createElement("input",{ref:fref,type:"file",style:{display:"none"},onChange:(e)=>handleFile(e.target.files[0])}),
             React.createElement("div",{style:{fontSize:28,marginBottom:10}},"📂"),
             React.createElement("div",{style:{fontSize:12,fontWeight:500,color:"#e8f4ff",marginBottom:5}},file?file.name:"Drop your ECG file here"),
             React.createElement("div",{style:{fontSize:10,color:"rgba(0,212,255,0.35)",marginBottom:8}},file?"Click to change file":"or click to browse"),
