@@ -99,13 +99,10 @@ async def upload_search(file: UploadFile = File(...), beat_type: str = "V"):
     if len(values) < 50:
         raise HTTPException(400, f"Signal too short: {len(values)} samples.")
     import statistics
-    mean_val = sum(values) / len(values)
-    std_val = statistics.stdev(values) if len(values) > 1 else 1
-    if std_val == 0: std_val = 1
-    normalized = [(v - mean_val) / std_val for v in values]
-    q_mean = round(sum(normalized) / len(normalized), 4)
-    q_std = round(statistics.stdev(normalized), 4)
-    q_range = round(max(normalized) - min(normalized), 4)
+    # Use raw values directly without normalization - match DB storage format
+    q_mean = round(sum(values) / len(values), 4)
+    q_std = round(statistics.stdev(values) if len(values) > 1 else 0, 4)
+    q_range = round(max(values) - min(values), 4)
     mean_tol, std_tol, range_tol = {"N":(0.5,0.5,1.0),"V":(0.5,0.5,1.0),"L":(0.5,0.5,1.0),"A":(0.5,0.5,1.0)}.get(beat_type,(0.5,0.5,1.0))
     conn = get_conn()
     t_start = time.time()
