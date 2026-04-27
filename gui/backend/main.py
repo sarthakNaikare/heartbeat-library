@@ -106,7 +106,7 @@ async def upload_search(file: UploadFile = File(...), beat_type: str = "V"):
     q_mean = round(sum(normalized) / len(normalized), 4)
     q_std = round(statistics.stdev(normalized), 4)
     q_range = round(max(normalized) - min(normalized), 4)
-    mean_tol, std_tol, range_tol = {"N":(0.05,0.05,0.10),"V":(0.05,0.05,0.10),"L":(0.05,0.05,0.10),"A":(0.15,0.15,0.50)}.get(beat_type,(0.15,0.15,0.50))
+    mean_tol, std_tol, range_tol = {"N":(0.5,0.5,1.0),"V":(0.5,0.5,1.0),"L":(0.5,0.5,1.0),"A":(0.5,0.5,1.0)}.get(beat_type,(0.5,0.5,1.0))
     conn = get_conn()
     t_start = time.time()
     t_fs = time.time()
