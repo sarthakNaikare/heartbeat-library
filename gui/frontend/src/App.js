@@ -8,8 +8,8 @@ const DEMO={pvc:{beat:"V",filter:"84ms",dtw:"2.3s",cands:"11/201k",prec:"100%",r
 const GLOBALCSS=`
 *{cursor:none!important;}
 .hb-cursor{position:fixed;pointer-events:none;z-index:99999;transition:transform 0.1s ease;}
-.hb-cursor-dot{width:8px;height:8px;background:#00d4ff;border-radius:50%;position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:99999;transition:all 0.05s ease;box-shadow:0 0 10px #00d4ff;}
-.hb-cursor-ring{width:32px;height:32px;border:1px solid rgba(0,212,255,0.5);border-radius:50%;position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:99998;transition:all 0.15s ease;}
+.hb-cursor-dot{width:6px;height:6px;background:#00d4ff;border-radius:50%;position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:99999;transition:none;box-shadow:0 0 8px #00d4ff;}
+.hb-cursor-ring{width:28px;height:28px;border:1px solid rgba(0,212,255,0.5);border-radius:50%;position:fixed;transform:translate(-50%,-50%);pointer-events:none;z-index:99998;transition:width 0.15s ease,height 0.15s ease,border-color 0.15s ease,background 0.15s ease;}
 .hb-cursor-ring.clicking{transform:translate(-50%,-50%) scale(0.6);border-color:#00d4ff;}
 .hb-cursor-ring.hovering{transform:translate(-50%,-50%) scale(1.5);border-color:rgba(0,212,255,0.8);background:rgba(0,212,255,0.05);}
 @keyframes scanline{0%{top:-2px;opacity:0;}5%{opacity:1;}95%{opacity:1;}100%{top:100%;opacity:0;}}
@@ -41,9 +41,11 @@ function Cursor(){
   const dot=useRef();const ring=useRef();
   const [clicking,setClicking]=useState(false);const [hovering,setHovering]=useState(false);
   useEffect(()=>{
+    let rx=0,ry=0;
     const mv=(e)=>{
       if(dot.current){dot.current.style.left=e.clientX+"px";dot.current.style.top=e.clientY+"px";}
-      if(ring.current){ring.current.style.left=e.clientX+"px";ring.current.style.top=e.clientY+"px";}
+      rx+=(e.clientX-rx)*0.12;ry+=(e.clientY-ry)*0.12;
+      if(ring.current){ring.current.style.left=rx+"px";ring.current.style.top=ry+"px";}
       const el=document.elementFromPoint(e.clientX,e.clientY);
       const isHov=el&&(el.tagName==="BUTTON"||el.closest("[data-hover]")||el.closest("a")||el.closest("[onclick]")||getComputedStyle(el).cursor==="pointer");
       setHovering(!!isHov);
@@ -476,7 +478,53 @@ function AboutPage(){
 
 export default function App(){
   const [page,setPage]=useState("search");
+  const [splash,setSplash]=useState(true);
   const pages={search:React.createElement(SearchPage,{key:"search"}),dashboard:React.createElement(DashboardPage,{key:"dashboard"}),benchmarks:React.createElement(BenchmarksPage,{key:"benchmarks"}),tech:React.createElement(TechPage,{key:"tech"}),about:React.createElement(AboutPage,{key:"about"})};
+  if(splash) return React.createElement("div",{style:{minHeight:"100vh",background:"#020818",display:"flex",alignItems:"center",justifyContent:"center",position:"relative",overflow:"hidden"}},
+    React.createElement("style",null,GLOBALCSS),
+    React.createElement(Cursor),
+    React.createElement("div",{style:{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(0,212,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.022) 1px,transparent 1px)",backgroundSize:"32px 32px",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(0,212,255,0.35),transparent)",animation:"scanline 6s linear infinite",pointerEvents:"none",zIndex:5}}),
+    React.createElement("div",{style:{position:"absolute",width:500,height:500,top:-150,right:-100,borderRadius:"50%",background:"rgba(0,60,160,0.15)",filter:"blur(100px)",animation:"glowpulse 4s ease-in-out infinite",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:400,height:400,bottom:-120,left:-80,borderRadius:"50%",background:"rgba(0,120,80,0.1)",filter:"blur(100px)",animation:"glowpulse 4s ease-in-out infinite 2s",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:350,height:350,top:30,right:50,borderRadius:"50%",border:"1px solid rgba(0,212,255,0.06)",animation:"floatring 8s ease-in-out infinite",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:240,height:240,bottom:60,left:40,borderRadius:"50%",border:"1px solid rgba(0,212,255,0.04)",animation:"floatring 12s ease-in-out infinite -4s",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:5,height:5,background:"#00d4ff",top:"20%",right:"20%",borderRadius:"50%",animation:"floatdot 7s ease-in-out infinite",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:3,height:3,background:"#00e676",top:"65%",left:"12%",borderRadius:"50%",animation:"floatdot 9s ease-in-out infinite -3s",pointerEvents:"none"}}),
+    React.createElement("div",{style:{position:"absolute",width:4,height:4,background:"#ff5252",top:"35%",left:"35%",borderRadius:"50%",animation:"floatdot 8s ease-in-out infinite -5s",pointerEvents:"none"}}),
+    React.createElement("div",{style:{textAlign:"center",position:"relative",zIndex:10,animation:"pagein 0.8s ease both"}},
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:14,marginBottom:28}},
+        React.createElement("svg",{width:48,height:48,viewBox:"0 0 22 22",fill:"none"},
+          React.createElement("circle",{cx:11,cy:11,r:10,stroke:"rgba(0,212,255,0.3)",strokeWidth:1}),
+          React.createElement("path",{d:"M2,11 L5,11 L7,6 L9,16 L11,9 L13,13 L15,11 L20,11",stroke:"#00d4ff",strokeWidth:1.2,strokeLinecap:"round"})
+        ),
+        React.createElement("div",{style:{fontSize:28,fontWeight:500,color:"#e8f4ff",letterSpacing:"-0.5px"}},"Heartbeat Library")
+      ),
+      React.createElement("div",{style:{fontSize:15,fontWeight:400,color:"rgba(0,212,255,0.45)",marginBottom:8,letterSpacing:"0.5px"}},"The World's First Time-Series ECG Similarity Engine"),
+      React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:20,marginBottom:40}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,fontSize:11,color:"rgba(255,140,60,0.65)",padding:"4px 14px",borderRadius:20,border:"1px solid rgba(255,140,60,0.15)",background:"rgba(255,140,60,0.04)"}},"Built with TimescaleDB"),
+        React.createElement("div",{style:{fontSize:11,color:"rgba(0,212,255,0.4)"}},"×"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,fontSize:11,color:"rgba(0,212,255,0.65)",padding:"4px 14px",borderRadius:20,border:"1px solid rgba(0,212,255,0.15)",background:"rgba(0,212,255,0.04)"}},"Dynamic Time Warping"),
+        React.createElement("div",{style:{fontSize:11,color:"rgba(0,212,255,0.4)"}},"×"),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:7,fontSize:11,color:"rgba(0,230,118,0.65)",padding:"4px 14px",borderRadius:20,border:"1px solid rgba(0,230,118,0.15)",background:"rgba(0,230,118,0.04)"}},"99.6M ECG samples")
+      ),
+      React.createElement("div",{"data-hover":true,className:"hov-btn",onClick:()=>setSplash(false),style:{display:"inline-flex",alignItems:"center",gap:10,padding:"14px 36px",borderRadius:12,border:"1px solid rgba(0,212,255,0.4)",background:"rgba(0,212,255,0.08)",color:"#00d4ff",fontSize:13,cursor:"pointer",boxShadow:"0 0 30px rgba(0,212,255,0.12),inset 0 0 20px rgba(0,212,255,0.04)",letterSpacing:"0.3px"}},
+        React.createElement("svg",{width:16,height:16,viewBox:"0 0 22 22",fill:"none"},
+          React.createElement("circle",{cx:11,cy:11,r:10,stroke:"rgba(0,212,255,0.4)",strokeWidth:1}),
+          React.createElement("path",{d:"M2,11 L5,11 L7,6 L9,16 L11,9 L13,13 L15,11 L20,11",stroke:"#00d4ff",strokeWidth:1.5,strokeLinecap:"round"})
+        ),
+        "Enter the Heartbeat Library"
+      ),
+      React.createElement("div",{style:{marginTop:28,display:"flex",justifyContent:"center",gap:28}},
+        [["99.6M","ECG samples"],["2,821","Patients"],["100%","Precision"],["91.2%","Compression"]].map(([v,l])=>
+          React.createElement("div",{key:l,style:{textAlign:"center"}},
+            React.createElement("div",{style:{fontSize:18,fontWeight:500,color:"#00d4ff"}},v),
+            React.createElement("div",{style:{fontSize:9,color:"rgba(0,212,255,0.35)",textTransform:"uppercase",letterSpacing:"0.8px",marginTop:2}},l)
+          )
+        )
+      )
+    )
+  );
   return React.createElement("div",{style:{minHeight:"100vh",background:"#020818",padding:"20px"}},
     React.createElement("style",null,GLOBALCSS),
     React.createElement(Cursor),
